@@ -46,7 +46,9 @@ INSTALLED_APPS = [
 
     'user.apps.UserConfig',
     'organization',
-    'booking',]
+    'booking',
+    'event'
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
