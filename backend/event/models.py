@@ -13,6 +13,11 @@ class Event(models.Model):
     location = models.CharField(max_length=200)
     period = models.CharField(max_length=50)
 
+    created_at = models.DateTimeField(auto_now_add=True,
+                                      verbose_name="Время создания")
+    updated_at = models.DateTimeField(auto_now=True,
+                                      verbose_name="Время изменения")
+
     class Meta:
         verbose_name = "Мероприятие"
         verbose_name_plural = "Мероприятия"

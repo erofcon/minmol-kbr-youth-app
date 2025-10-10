@@ -56,6 +56,11 @@ class Room(models.Model):
                                verbose_name="Молодежный центр",
                                help_text="Какому Молодежному центру принадлежит это помещение")
 
+    is_active = models.BooleanField(default=True, verbose_name="Активное помещение",
+                                    help_text="Указывает, следует ли считать это помещение активным. "
+                                              "Можно снять это выделение вместо удаления, "
+                                              "тогда пользователи не увидят помещение в Telegram")
+
     responsible = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -63,8 +68,8 @@ class Room(models.Model):
         null=True,
         related_name="responsible_for_rooms",
         verbose_name="Ответсвенный за помещение",
-        help_text="ФИО и номер телефона данного сотрудника увидят внешние пользователи Telegram(если заполнен). "
-                  "Если у сотрудника заполнен Telegram ID, то он получит уведомление при поступлении заявки бронирования.")
+        help_text="Если у сотрудника заполнен Telegram ID, то он получит уведомление при поступлении заявки "
+                  "бронирования.")
 
     created_at = models.DateTimeField(auto_now_add=True,
                                       verbose_name="Время создания")
