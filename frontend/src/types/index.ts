@@ -38,3 +38,26 @@ export interface HourRange {
     start: number
     end: number
 }
+
+export interface Event {
+    id: string;
+    image: string | null;
+    title: string;
+    description: string;
+    location: string;
+    period: string;
+}
+
+export interface District {
+    id: string;
+    name: string;
+}
+
+export interface Organization {
+    id: string;
+    name: string;
+    district: District;
+    emblem: string | null;
+    address: string | null;
+    phone: string | null;
+}

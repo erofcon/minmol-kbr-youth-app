@@ -110,7 +110,7 @@ const navigateTo = (route: string) => {
           <div
               @click="selectRoom(room)"
               class="relative tg-secondary-bg tg-text rounded-2xl p-4 flex items-center space-x-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
-              :class="{'ring-2 ring-blue-400 tg-btn shadow-lg': selectedRoom?.id === room.id }"
+              :class="{'tg-btn shadow-lg': selectedRoom?.id === room.id }"
           >
             <div class="flex-shrink-0">
               <img v-if="room.image" class="w-28 h-28 md:w-32 md:h-32 object-cover rounded-xl" :src="room.image"

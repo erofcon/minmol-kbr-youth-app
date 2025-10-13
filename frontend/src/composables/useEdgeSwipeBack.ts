@@ -1,3 +1,4 @@
+// src/composables/useEdgeSwipeBack.ts
 import {onMounted, onUnmounted} from 'vue'
 import {useRouter} from 'vue-router'
 
@@ -6,6 +7,24 @@ interface SwipeBackOptions {
     maxDy?: number
     minVelocity?: number
 }
+
+function isInsideHorizontalScroller(element: HTMLElement | null): boolean {
+    if (!element) return false
+    let parent = element
+    // Проверяем до 5 уровней вверх, этого обычно достаточно
+    for (let i = 0; i < 5 && parent && parent !== document.body; i++) {
+        const style = window.getComputedStyle(parent)
+        const overflowX = style.getPropertyValue('overflow-x')
+        const isScrollable = overflowX === 'auto' || overflowX === 'scroll'
+
+        if (isScrollable && parent.scrollWidth > parent.clientWidth) {
+            return true
+        }
+        parent = parent.parentElement as HTMLElement
+    }
+    return false
+}
+
 
 export function useEdgeSwipeBack(options: SwipeBackOptions = {}) {
     const router = useRouter()
@@ -28,6 +47,11 @@ export function useEdgeSwipeBack(options: SwipeBackOptions = {}) {
     const handleTouchStart = (e: TouchEvent) => {
         if (isSwipeDisabled() || e.touches.length !== 1) return
 
+        if (isInsideHorizontalScroller(e.target as HTMLElement)) {
+            isTracking = false
+            return;
+        }
+
         startX = e.touches[0].clientX
         startY = e.touches[0].clientY
         startTime = Date.now()
@@ -45,19 +69,15 @@ export function useEdgeSwipeBack(options: SwipeBackOptions = {}) {
         const absDeltaX = Math.abs(deltaX)
         const absDeltaY = Math.abs(deltaY)
 
-        // Определяем направление один раз
         if (isHorizontal === null && (absDeltaX > 20 || absDeltaY > 20)) {
             isHorizontal = absDeltaX > absDeltaY * 1.5
         }
 
-        // Если это горизонтальный свайп вправо
         if (isHorizontal && deltaX > 0) {
-            // Блокируем скролл
             if (absDeltaX > absDeltaY) {
                 e.preventDefault()
             }
 
-            // Проверяем условия
             if (absDeltaX >= minDx && absDeltaY <= maxDy) {
                 console.log('🔙 Swipe back triggered!', {
                     deltaX: absDeltaX,
@@ -67,7 +87,6 @@ export function useEdgeSwipeBack(options: SwipeBackOptions = {}) {
                 triggerNavigation()
             }
         } else if (isHorizontal === false) {
-            // Это вертикальный скролл - прекращаем отслеживание
             isTracking = false
         }
     }
@@ -85,9 +104,8 @@ export function useEdgeSwipeBack(options: SwipeBackOptions = {}) {
         const absDeltaX = Math.abs(deltaX)
         const absDeltaY = Math.abs(deltaY)
         const duration = Date.now() - startTime
-        const velocity = absDeltaX / duration // px/ms
+        const velocity = absDeltaX / duration
 
-        // Быстрый свайп
         if (
             deltaX > 0 &&
             absDeltaX > absDeltaY * 1.5 &&
@@ -116,7 +134,7 @@ export function useEdgeSwipeBack(options: SwipeBackOptions = {}) {
 
     onMounted(() => {
         document.addEventListener('touchstart', handleTouchStart, {passive: true})
-        document.addEventListener('touchmove', handleTouchMove, {passive: false}) // passive: false для preventDefault
+        document.addEventListener('touchmove', handleTouchMove, {passive: false})
         document.addEventListener('touchend', handleTouchEnd, {passive: true})
     })
 

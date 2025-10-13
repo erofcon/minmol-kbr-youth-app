@@ -22,11 +22,11 @@ const navigateTo = (route: string) => {
               class="tg-btn cursor-pointer font-bold rounded-full px-5 py-4">
         Забронировать помещение
       </button>
-      <button  @click="navigateTo('/app/event_list')" type="button"
+      <button @click="navigateTo('/app/event_list')" type="button"
               class="tg-btn-invert-outline cursor-pointer font-bold rounded-full px-5 py-2">
         Показать мероприятия
       </button>
-      <button type="button"
+      <button @click="navigateTo('/app/organizations')" type="button"
               class="tg-btn-invert-outline cursor-pointer font-bold rounded-full px-5 py-2">
         Список молодежных организации
       </button>
