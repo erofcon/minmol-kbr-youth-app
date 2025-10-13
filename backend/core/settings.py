@@ -25,10 +25,12 @@ SECRET_KEY = 'django-insecure-sfi=2eurw(1g(2x539*w5h8jg-eu#=#@qjy)pkpfm97+v3j3lz
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+#     "http://127.0.0.1:5173",
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
@@ -149,4 +151,5 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API для работы с сервисом Minmol-kbr.',
     'VERSION': '0.0.1',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SORT_OPERATION_PARAMETERS': False,
 }
