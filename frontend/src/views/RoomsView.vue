@@ -5,6 +5,7 @@ import type {Room} from "@/types"
 import {useRoomsStore} from "@/stores/rooms"
 import SkeletonRoomCard from "@/components/skeletons/SkeletonRoomCard.vue"
 import router from "@/router";
+import ErrorComponent from "@/components/ErrorComponent.vue";
 
 const roomsStore = useRoomsStore()
 
@@ -27,15 +28,12 @@ const filteredRooms = computed(() => {
   const lowerCaseQuery = searchQuery.value.toLowerCase().trim()
 
   return allRooms.value.filter(room => {
-
-    const matchesCenter = selectedCenterId.value === null || selectedCenterId.value === room.center.id
+    const matchesCenter = selectedCenterId.value === null || selectedCenterId.value === room.center?.id
     if (!lowerCaseQuery) {
       return matchesCenter
     }
     const matchesTitle = room.title.toLowerCase().includes(lowerCaseQuery)
-    const matchesTag = room.tags.some(tag =>
-        tag.name.toLowerCase().includes(lowerCaseQuery)
-    );
+    const matchesTag = room.tags.some(tag => tag.name.toLowerCase().includes(lowerCaseQuery))
     return matchesCenter && (matchesTitle || matchesTag)
   })
 })
@@ -70,9 +68,7 @@ const navigateTo = (route: string) => {
       </div>
     </div>
 
-    <div v-else-if="roomsStore.error" class="text-center py-10 text-red-500">
-      {{ roomsStore.error }}
-    </div>
+    <ErrorComponent v-else-if="roomsStore.error" :error-text=" roomsStore.error"/>
 
 
     <div v-else>

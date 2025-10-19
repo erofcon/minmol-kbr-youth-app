@@ -39,7 +39,7 @@ const navigateTo = (route: string) => {
           </svg>
         </div>
         <h1 class="text-2xl font-bold mt-4 tg-text">{{ room.title }}</h1>
-        <h1 class="font-bold mt-4 tg-text">{{ room.center.name }}</h1>
+        <h1 class="font-bold mt-4 tg-text">{{ room.center?.name || '—' }}</h1>
         <button
             @click="navigateTo(`/app/booking/${roomId}`)"
             type="button"

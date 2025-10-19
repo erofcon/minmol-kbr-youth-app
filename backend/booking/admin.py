@@ -27,13 +27,13 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ['display_booking', 'applicant_name']
     list_filter = ("status", "room", "created_at")
     search_fields = ("applicant_name", "applicant_tg_username",
-                     "applicant_phone", "event_name")
+                     "applicant_tg_id", "applicant_phone", "event_name")
     search_help_text = (
-        "Поиск по: имени заявителя, Telegram username заявителя,"
+        "Поиск по: имени заявителя, Telegram username/ID заявителя,"
         " телефону или названию мероприятия")
     ordering = ['-created_at', 'status']
 
-    readonly_fields_for_all = ("created_at", "updated_at")
+    readonly_fields_for_all = ("applicant_tg_id", "created_at", "updated_at")
 
     fieldsets = (
         ("Информация от пользователя", {"fields": USER_INFO_FIELDS}),
@@ -72,7 +72,6 @@ class BookingAdmin(admin.ModelAdmin):
             return qs
         return qs.filter(room__responsible=request.user)
 
-    # В поле room можно выбирать только свои помещения
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "room" and not request.user.is_superuser:
             kwargs["queryset"] = Room.objects.filter(responsible=request.user)

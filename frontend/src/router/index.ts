@@ -10,6 +10,8 @@ import BookingSuccessView from "@/views/BookingSuccessView.vue";
 import EventListView from "@/views/EventListView.vue";
 import EventDetailView from "@/views/EventDetailView.vue";
 import OrganizationListView from "@/views/OrganizationListView.vue";
+import MyBookingsView from "@/views/MyBookingsView.vue";
+import BookingDetailView from "@/views/BookingDetailView.vue";
 
 
 const router = createRouter({
@@ -81,7 +83,19 @@ const router = createRouter({
                     name: 'organizations_list',
                     component: OrganizationListView,
                     meta: {depth: 2}
-                }
+                },
+                {
+                    path: 'my_bookings',
+                    name: 'my_bookings',
+                    component: MyBookingsView,
+                    meta: {depth: 2}
+                },
+                {
+                    path: 'my_bookings/:id',
+                    name: 'booking_detail',
+                    component: BookingDetailView,
+                    meta: {depth: 3}
+                },
             ],
         },
         {

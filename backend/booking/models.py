@@ -41,13 +41,18 @@ class Room(models.Model):
     """Помещение для бронирования"""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     title = models.CharField(max_length=255, verbose_name="Заголовок")
+
     description = models.TextField(blank=True, verbose_name="Описание")
+
     capacity = models.PositiveIntegerField(default=0,
                                            verbose_name="Вмещаемость")
+
     image = models.ImageField(upload_to="rooms/images/", blank=True, null=True,
                               verbose_name="Изображение",
                               help_text="Возможно добавить только одно изображение")
+
     tags = models.ManyToManyField(RoomTag, blank=True, related_name="rooms",
                                   verbose_name="Теги помещении")
 
@@ -56,7 +61,11 @@ class Room(models.Model):
                                verbose_name="Молодежный центр",
                                help_text="Какому Молодежному центру принадлежит это помещение")
 
-    is_active = models.BooleanField(default=True, verbose_name="Активное помещение",
+    address = models.CharField(max_length=255, blank=True, null=True,
+                               verbose_name="Адрес")
+
+    is_active = models.BooleanField(default=True,
+                                    verbose_name="Активное помещение",
                                     help_text="Указывает, следует ли считать это помещение активным. "
                                               "Можно снять это выделение вместо удаления, "
                                               "тогда пользователи не увидят помещение в Telegram")
@@ -73,6 +82,7 @@ class Room(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True,
                                       verbose_name="Время создания")
+
     updated_at = models.DateTimeField(auto_now=True,
                                       verbose_name="Время изменения")
 
@@ -86,7 +96,7 @@ class Room(models.Model):
 
 USER_INFO_FIELDS = (
     "room", "start_at", "end_at",
-    "applicant_name", "applicant_tg_username", "applicant_phone",
+    "applicant_name", "applicant_phone",
     "event_name", "event_purpose", "target_audience",
     "invited_speakers", "required_equipment",
 )
@@ -110,19 +120,22 @@ class Booking(models.Model):
                                         verbose_name="Причина отклонения",
                                         help_text="При отклонении обязательно необходимо заполнить причину отклонения")
 
-    # Информация от пользователья
+
     start_at = models.DateTimeField(verbose_name="Начало бронирования",
                                     help_text="Дата и время начала бронирования")
-
     end_at = models.DateTimeField(verbose_name="Окончание бронирования",
                                   help_text="Дата и время окончания бронирования")
 
     applicant_name = models.CharField(max_length=255,
                                       verbose_name="Имя заявителя")
 
-    applicant_tg_username = models.CharField(max_length=255, blank=False,
-                                             null=False,
-                                             verbose_name="Имя заявителя в Telegram")
+    applicant_tg_id = models.CharField(max_length=50, blank=True, null=True,
+                                       db_index=True,
+                                       verbose_name="Telegram ID заявителя")
+
+    applicant_tg_username = models.CharField(max_length=255, blank=True,
+                                             null=True,
+                                             verbose_name="Telegram username заявителя")
 
     applicant_phone = models.CharField(max_length=15,
                                        validators=[phone_validator],
@@ -130,16 +143,12 @@ class Booking(models.Model):
 
     event_name = models.CharField(max_length=255,
                                   verbose_name="Название мероприятия")
-
     event_purpose = models.CharField(max_length=255,
                                      verbose_name="Цель мероприятия")
-
     target_audience = models.CharField(max_length=255,
                                        verbose_name="Целевая аудитория")
-
     invited_speakers = models.CharField(max_length=255,
                                         verbose_name="Приглашенные спикеры")
-
     required_equipment = models.CharField(max_length=255,
                                           verbose_name="Список необходимого оборудования")
 
@@ -161,10 +170,9 @@ class Booking(models.Model):
                 {"rejection_reason": "Укажите причину отклонения.😣"})
 
         if self.status == Status.APPROVED and (
-                self.rejection_reason).strip():
-            raise ValidationError(
-                {
-                    "rejection_reason": "При одобрении указывать причину отклонения не нужно.😃"})
+                self.rejection_reason or "").strip():
+            raise ValidationError({
+                "rejection_reason": "При одобрении указывать причину отклонения не нужно.😃"})
 
         if self.end_at <= self.start_at:
             raise ValidationError(
@@ -188,7 +196,6 @@ class Booking(models.Model):
                 check=~Q(status=Status.REJECTED) | ~Q(rejection_reason=""),
             )
         ]
-
         verbose_name = "Бронирование"
         verbose_name_plural = "Бронирования"
         ordering = ["-created_at"]

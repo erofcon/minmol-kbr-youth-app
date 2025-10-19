@@ -18,6 +18,10 @@ const navigateTo = (route: string) => {
     </p>
 
     <div class="flex flex-col gap-4 mt-8">
+      <button @click="navigateTo('/app/my_bookings')" type="button"
+              class="tg-btn-invert-outline cursor-pointer font-bold rounded-full px-5 py-2">
+        Мои бронирования
+      </button>
       <button @click="navigateTo('/app/rooms')" type="button"
               class="tg-btn cursor-pointer font-bold rounded-full px-5 py-4">
         Забронировать помещение

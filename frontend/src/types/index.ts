@@ -15,17 +15,15 @@ export interface Room {
     description: string
     capacity: number
     image: string | null
-    center: Center
+    center: Center | null
     responsible: number
 }
-
 
 export interface BookingPayload {
     room_id: string
     start_at: string
     end_at: string
     applicant_name: string
-    applicant_tg_username: string
     applicant_phone: string
     event_name: string
     event_purpose: string

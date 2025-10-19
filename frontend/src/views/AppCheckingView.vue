@@ -1,25 +1,50 @@
-<script setup lang="ts">
-import {onMounted, ref} from "vue";
-import {useTelegram} from "@/composables/useTelegram.ts";
-import router from "@/router";
-import LogoComponent from "@/components/LogoComponent.vue";
+<script setup lang="ts"> import {onMounted, ref} from "vue"
+import LogoComponent from "@/components/LogoComponent.vue"
+import {useTelegram} from "@/composables/useTelegram"
+import {api} from "@/api"
+import router from "@/router"
+import ErrorComponent from "@/components/ErrorComponent.vue";
 
-
-const {isTelegramEnvironment} = useTelegram()
+const {isTelegramEnvironment, webApp} = useTelegram()
 const status = ref<'checking' | 'success' | 'error'>('checking')
+const errorText = ref<string>('Это приложение можно открыть только в Telegram')
+
+async function waitForInitData(maxWaitMs = 3000) {
+  const started = performance.now()
+  while (performance.now() - started < maxWaitMs) {
+    if (webApp.value?.initData && webApp.value.initData.length > 0) return true;
+    await new Promise(r => setTimeout(r, 50))
+  }
+  return false;
+}
 
 onMounted(async () => {
   status.value = 'checking'
-
-  if (isTelegramEnvironment()) {
-    setTimeout(() => {
-      status.value = 'success'
-      router.replace({name: 'home'})
-    }, 1000)
-  } else {
+  if (!isTelegramEnvironment()) {
     status.value = 'error'
+    errorText.value = 'Это приложение можно открыть только в Telegram'
+    return
+  }
+
+  const isReady = await waitForInitData();
+  if (!isReady) {
+    status.value = 'error';
+    errorText.value = 'Не удалось получить данные для авторизации от Telegram. Попробуйте перезапустить приложение.';
+    return;
+  }
+
+  try {
+    await api.health()
+    status.value = 'success'
+    router.replace({name: 'home'})
+
+  } catch (e: any) {
+    status.value = 'error';
+    errorText.value = e?.message || 'Ошибка подключения. Попробуйте позже.'
+    console.error('Health check failed:', e)
   }
 })
+
 </script>
 
 <template>
@@ -38,10 +63,7 @@ onMounted(async () => {
       <span class="sr-only">Loading...</span>
     </div>
 
-    <div v-if="status=='error'" class="p-4 mb-4 mx-4 text-sm tg-hint rounded-lg tg-secondary-bg" role="alert">
-      <span class="tg-text font-bold">Произошла ошибка!</span>
-      Это приложение можно открыть только в Telegram
-    </div>
+    <ErrorComponent  v-if="status=='error'" :error-text="errorText"/>
   </section>
 
 

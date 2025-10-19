@@ -6,6 +6,8 @@ import {computed, onMounted, ref, watch} from "vue"
 import BookingCalendar from "@/components/booking/BookingCalendar.vue"
 import TimeSlotPicker from "@/components/booking/TimeSlotPicker.vue"
 import {useBookingStore} from "@/stores/booking"
+import {api} from '@/api';
+
 
 type ApiInterval = {
   start_at: string
@@ -92,14 +94,18 @@ function isFullyBooked(ranges: HourRange[]): boolean {
 }
 
 async function fetchBusyIntervals(roomId: string): Promise<ApiInterval[]> {
-  await new Promise(r => setTimeout(r, 400));
-  return [
-    {start_at: "2025-10-13T09:00:00.000Z", end_at: "2025-10-13T18:00:00.000Z"},
-    {start_at: "2025-10-15T10:00:00.000Z", end_at: "2025-10-15T12:00:00.000Z"},
-    {start_at: "2025-10-15T15:00:00.000Z", end_at: "2025-10-15T16:00:00.000Z"},
-    {start_at: "2025-10-18T09:00:00.000Z", end_at: "2025-10-18T13:00:00.000Z"},
-  ]
+  return await api.getRoomBusy(roomId);
 }
+
+// async function fetchBusyIntervals(roomId: string): Promise<ApiInterval[]> {
+//   await new Promise(r => setTimeout(r, 400));
+//   return [
+//     {start_at: "2025-10-13T09:00:00.000Z", end_at: "2025-10-13T18:00:00.000Z"},
+//     {start_at: "2025-10-15T10:00:00.000Z", end_at: "2025-10-15T12:00:00.000Z"},
+//     {start_at: "2025-10-15T15:00:00.000Z", end_at: "2025-10-15T16:00:00.000Z"},
+//     {start_at: "2025-10-18T09:00:00.000Z", end_at: "2025-10-18T13:00:00.000Z"},
+//   ]
+// }
 
 function processBusy(api: ApiInterval[]) {
   const tmp = new Map<string, HourRange[]>()
@@ -139,14 +145,13 @@ function processBusy(api: ApiInterval[]) {
 }
 
 onMounted(async () => {
-  if (roomsStore.rooms.length === 0) await roomsStore.fetchRooms()
-
+  if (roomsStore.rooms.length === 0)
+    await roomsStore.fetchRooms()
   bookingStore.setRoom(roomId)
-  const api = await fetchBusyIntervals(roomId)
+  const apiData = await fetchBusyIntervals(roomId)
+  processBusy(apiData)
 
-  processBusy(api)
 });
-
 
 const minDateKey = todayKeyMsk
 

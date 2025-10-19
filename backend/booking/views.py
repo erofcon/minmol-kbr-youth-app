@@ -6,6 +6,8 @@ from .serializers import RoomSerializer, RoomTagSerializer, BookingSerializer, \
     BookingBusySerializer
 from .models import RoomTag, Room, Booking, Status
 from rest_framework import serializers
+from core.auth import TelegramInitDataAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 
 class RoomTagsView(generics.ListAPIView):
@@ -14,6 +16,8 @@ class RoomTagsView(generics.ListAPIView):
     """
     queryset = RoomTag.objects.all()
     serializer_class = RoomTagSerializer
+    authentication_classes = [TelegramInitDataAuthentication]
+    permission_classes = [IsAuthenticated]
 
 
 class RoomView(generics.ListAPIView):
@@ -22,6 +26,8 @@ class RoomView(generics.ListAPIView):
     """
     queryset = Room.objects.prefetch_related('tags').filter(is_active=True)
     serializer_class = RoomSerializer
+    authentication_classes = [TelegramInitDataAuthentication]
+    permission_classes = [IsAuthenticated]
 
 
 @extend_schema(
@@ -50,19 +56,24 @@ class BookingView(generics.ListCreateAPIView):
     """
     serializer_class = BookingSerializer
     queryset = Booking.objects.select_related('room').order_by('-start_at')
+    authentication_classes = [TelegramInitDataAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Фильтрует queryset и проверяет наличие обязательного параметра.
-        """
-        tg_username = self.request.query_params.get('tg_username')
-
-        if not tg_username:
+        tg = getattr(self.request, 'tg_init_data', {}) or {}
+        user = tg.get('user') or {}
+        tg_id = str(user.get('id') or '')
+        if not tg_id:
             raise serializers.ValidationError(
-                {'error': "Параметр 'tg_username' является обязательным."}
-            )
+                {'detail': 'Telegram id не найден'})
+        return self.queryset.filter(applicant_tg_id=tg_id)
 
-        return self.queryset.filter(applicant_tg_username=tg_username)
+    def perform_create(self, serializer):
+        tg = getattr(self.request, 'tg_init_data', {}) or {}
+        user = tg.get('user') or {}
+        tg_id = str(user.get('id') or '')
+        username = (user.get('username') or '').strip() or None
+        serializer.save(applicant_tg_id=tg_id, applicant_tg_username=username)
 
 
 @extend_schema(
@@ -80,6 +91,8 @@ class BookingView(generics.ListCreateAPIView):
 class RoomBusyView(generics.ListAPIView):
     serializer_class = BookingBusySerializer
     pagination_class = None
+    authentication_classes = [TelegramInitDataAuthentication]  # защита
+    permission_classes = [IsAuthenticated]
 
     def _make_aware(self, dt):
         if dt and timezone.is_naive(dt):
@@ -98,7 +111,6 @@ class RoomBusyView(generics.ListAPIView):
         start_dt = self._make_aware(parse_datetime(start)) if start else None
         end_dt = self._make_aware(parse_datetime(end)) if end else None
 
-        # Валидация диапазона
         if start_dt and end_dt and end_dt <= start_dt:
             raise serializers.ValidationError(
                 {'detail': "Параметр 'end' должен быть позже 'start'."})
@@ -113,3 +125,21 @@ class RoomBusyView(generics.ListAPIView):
             qs = qs.filter(end_at__gt=timezone.now())
 
         return qs
+
+
+@extend_schema(
+    methods=['GET'],
+    summary="Детали моей заявки",
+    description="Возвращает полную информацию о заявке текущего Telegram-пользователя."
+)
+class BookingDetailView(generics.RetrieveAPIView):
+    serializer_class = BookingSerializer
+    authentication_classes = [TelegramInitDataAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        tg = getattr(self.request, 'tg_init_data', {}) or {}
+        user = tg.get('user') or {}
+        tg_id = str(user.get('id') or '')
+        return Booking.objects.select_related('room', 'room__center').filter(
+            applicant_tg_id=tg_id)

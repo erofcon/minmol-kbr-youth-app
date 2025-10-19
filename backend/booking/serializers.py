@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from organization.serializers import CenterSerializer
 
 from .models import RoomTag, Room, Booking, Status
 
@@ -11,6 +12,7 @@ class RoomTagSerializer(serializers.ModelSerializer):
 
 class RoomSerializer(serializers.ModelSerializer):
     tags = RoomTagSerializer(read_only=True, many=True)
+    center = CenterSerializer(read_only=True)
 
     class Meta:
         model = Room
@@ -31,12 +33,14 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = [
             'id', 'room', 'room_id', 'status', 'start_at', 'end_at',
-            'applicant_name', 'applicant_tg_username', 'applicant_phone',
+            'applicant_name', 'applicant_tg_id', 'applicant_tg_username',
+            'applicant_phone',
             'event_name', 'event_purpose', 'target_audience',
             'invited_speakers', 'required_equipment',
             'rejection_reason', 'created_at'
         ]
-        read_only_fields = ['id', 'status', 'rejection_reason', 'created_at']
+        read_only_fields = ['id', 'status', 'rejection_reason', 'created_at',
+                            'applicant_tg_id', 'applicant_tg_username']
 
     def validate(self, attrs):
         room = attrs.get('room') or getattr(self.instance, 'room', None)
@@ -47,7 +51,7 @@ class BookingSerializer(serializers.ModelSerializer):
         if start_at and end_at and room:
             if end_at <= start_at:
                 raise serializers.ValidationError({
-                                                      'end_at': 'Окончание бронирования должно быть позже начала.'})
+                    'end_at': 'Окончание бронирования должно быть позже начала.'})
 
             qs = Booking.objects.filter(
                 room=room,
