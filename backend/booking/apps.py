@@ -1,7 +1,11 @@
+# booking/apps.py
 from django.apps import AppConfig
 
 
 class BookingConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'booking'
-    verbose_name = 'Бронирование помещении'
+    verbose_name = 'Бронирование помещений'
+
+    def ready(self):
+        import booking.signals  # noqa: F401

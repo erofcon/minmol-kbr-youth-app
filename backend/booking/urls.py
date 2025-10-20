@@ -10,6 +10,6 @@ urlpatterns = [
     path('rooms/<uuid:room_id>/busy/', RoomBusyView.as_view(),
          name='room-busy'),
 
-    path('bookings/uuid:pk/', BookingDetailView.as_view(),
+    path('bookings/<uuid:pk>/', BookingDetailView.as_view(),
          name='booking-detail'),
 ]

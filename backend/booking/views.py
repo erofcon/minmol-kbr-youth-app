@@ -1,18 +1,18 @@
+# booking/views.py
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from rest_framework import generics
+from rest_framework import generics, serializers
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from .serializers import RoomSerializer, RoomTagSerializer, BookingSerializer, \
-    BookingBusySerializer
+
+from .serializers import RoomSerializer, RoomTagSerializer, BookingSerializer, BookingBusySerializer
 from .models import RoomTag, Room, Booking, Status
-from rest_framework import serializers
 from core.auth import TelegramInitDataAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 
 class RoomTagsView(generics.ListAPIView):
     """
-    API для получения списка тегов помещении.
+    API для получения списка тегов помещений.
     """
     queryset = RoomTag.objects.all()
     serializer_class = RoomTagSerializer
@@ -22,7 +22,7 @@ class RoomTagsView(generics.ListAPIView):
 
 class RoomView(generics.ListAPIView):
     """
-    API для получения списка помещении.
+    API для получения списка помещений.
     """
     queryset = Room.objects.prefetch_related('tags').filter(is_active=True)
     serializer_class = RoomSerializer
@@ -31,29 +31,16 @@ class RoomView(generics.ListAPIView):
 
 
 @extend_schema(
-    methods=['GET'],  # Этот декоратор только для GET
-    summary="Получить список своих бронирований",
-    description="Возвращает список бронирований для указанного пользователя Telegram. Поддерживает пагинацию.",
-    parameters=[
-        OpenApiParameter(
-            name='tg_username',
-            description='Telegram username для фильтрации бронирований',
-            required=True,  # <--- Теперь это будет работать
-            type=str
-        )
-    ]
+    methods=['GET'],
+    summary="Получить список моих бронирований",
+    description="Возвращает список бронирований текущего Telegram-пользователя (по initData). Поддерживает пагинацию.",
 )
 @extend_schema(
-    methods=['POST'],  # Этот декоратор только для POST
+    methods=['POST'],
     summary="Создать новое бронирование",
-    description="Создает новую заявку на бронирование помещения.",
+    description="Создает новую заявку на бронирование помещения. После создания придёт уведомление в Telegram.",
 )
 class BookingView(generics.ListCreateAPIView):
-    """
-    API для получения списка своих бронирований и создания новых.
-    - GET: Возвращает список бронирований для пользователя Telegram.
-    - POST: Создает новую заявку на бронирование.
-    """
     serializer_class = BookingSerializer
     queryset = Booking.objects.select_related('room').order_by('-start_at')
     authentication_classes = [TelegramInitDataAuthentication]
@@ -64,8 +51,7 @@ class BookingView(generics.ListCreateAPIView):
         user = tg.get('user') or {}
         tg_id = str(user.get('id') or '')
         if not tg_id:
-            raise serializers.ValidationError(
-                {'detail': 'Telegram id не найден'})
+            raise serializers.ValidationError({'detail': 'Telegram id не найден'})
         return self.queryset.filter(applicant_tg_id=tg_id)
 
     def perform_create(self, serializer):
@@ -73,25 +59,23 @@ class BookingView(generics.ListCreateAPIView):
         user = tg.get('user') or {}
         tg_id = str(user.get('id') or '')
         username = (user.get('username') or '').strip() or None
+        # сигналы отправят уведомления автоматически
         serializer.save(applicant_tg_id=tg_id, applicant_tg_username=username)
 
 
 @extend_schema(
     methods=['GET'],
     summary="Получить занятые слоты помещения",
-    description="Возвращает интервалы, когда помещение занято. По умолчанию занятость — это статусы PENDING и APPROVED.",
+    description="Возвращает интервалы, когда помещение занято подтверждёнными бронями (статус APPROVED).",
     parameters=[
-        OpenApiParameter(name='start',
-                         description='Начало диапазона (ISO 8601)',
-                         required=False, type=str),
-        OpenApiParameter(name='end', description='Конец диапазона (ISO 8601)',
-                         required=False, type=str),
+        OpenApiParameter(name='start', description='Начало диапазона (ISO 8601)', required=False, type=str),
+        OpenApiParameter(name='end', description='Конец диапазона (ISO 8601)', required=False, type=str),
     ]
 )
 class RoomBusyView(generics.ListAPIView):
     serializer_class = BookingBusySerializer
     pagination_class = None
-    authentication_classes = [TelegramInitDataAuthentication]  # защита
+    authentication_classes = [TelegramInitDataAuthentication]
     permission_classes = [IsAuthenticated]
 
     def _make_aware(self, dt):
@@ -112,8 +96,7 @@ class RoomBusyView(generics.ListAPIView):
         end_dt = self._make_aware(parse_datetime(end)) if end else None
 
         if start_dt and end_dt and end_dt <= start_dt:
-            raise serializers.ValidationError(
-                {'detail': "Параметр 'end' должен быть позже 'start'."})
+            raise serializers.ValidationError({'detail': "Параметр 'end' должен быть позже 'start'."})
 
         if start_dt and end_dt:
             qs = qs.filter(start_at__lt=end_dt, end_at__gt=start_dt)
@@ -141,5 +124,4 @@ class BookingDetailView(generics.RetrieveAPIView):
         tg = getattr(self.request, 'tg_init_data', {}) or {}
         user = tg.get('user') or {}
         tg_id = str(user.get('id') or '')
-        return Booking.objects.select_related('room', 'room__center').filter(
-            applicant_tg_id=tg_id)
+        return Booking.objects.select_related('room', 'room__center').filter(applicant_tg_id=tg_id)
