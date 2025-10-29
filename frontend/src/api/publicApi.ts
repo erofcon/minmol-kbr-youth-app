@@ -1,7 +1,7 @@
 import axios from "axios";
 import type {PublicApiPaginated, Event as ApiEvent} from "@/types";
 
-const baseURL = 'https://молод07.рф/api/public';
+const baseURL = import.meta.env.VITE_PUBLIC_API_BASE_URL;
 
 const publicHttp = axios.create({
     baseURL,

@@ -88,45 +88,6 @@ onMounted(load); </script>
 
     <!-- Контент -->
     <div v-else-if="booking" class="mt-6 mx-2 space-y-6">
-      <!-- Карточка помещения и статус -->
-      <div class="relative tg-secondary-bg rounded-2xl p-4 flex items-center space-x-4 overflow-hidden">
-        <div class="flex-shrink-0">
-          <img
-              v-if="booking.room?.image"
-              :src="booking.room.image"
-              alt=""
-              class="w-16 h-16 rounded-xl object-cover"
-          />
-          <div v-else class="w-16 h-16 rounded-xl tg-bg flex items-center justify-center">
-            <svg class="h-7 w-7 tg-hint" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 6h16v12H4z" opacity=".3"/>
-              <path d="M20 4H4c-1.1 0-2 .9-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 14H4V6h16v12z"/>
-            </svg>
-          </div>
-        </div>
-        <div class="flex-grow min-w-0">
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="font-bold truncate tg-text">{{ roomTitle }}</h2>
-            <span class="flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full"
-                  :class="statusClass[booking.status]">
-          {{ statusLabel[booking.status] || booking.status }}
-        </span>
-          </div>
-          <div class="mt-1 flex items-center text-sm tg-hint gap-2">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3H5v18h14V3zM7 10h5v5H7z"/>
-            </svg>
-            <span class="truncate">{{ formatRange(booking.start_at, booking.end_at) }}</span>
-          </div>
-          <div v-if="centerName" class="mt-1 flex items-center text-sm tg-hint gap-2">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7z"/>
-            </svg>
-            <span class="truncate">{{ centerName }}</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Детали помещения (если есть) -->
       <div v-if="hasRoom" class="pb-3 border-b tg-border">
         <h3 class="font-bold tg-text text-lg mb-2">Помещение</h3>
@@ -140,6 +101,14 @@ onMounted(load); </script>
       <div class="pb-3 border-b tg-border">
         <h3 class="font-bold tg-text text-lg mb-2">Детали заявки</h3>
         <div class="grid grid-cols-1 gap-2 text-sm">
+          <div><span class="tg-hint">Дата: </span><span
+              class="truncate">{{ formatRange(booking.start_at, booking.end_at) }}</span></div>
+          <div><span>Статус: </span>
+            <span class="flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full"
+                  :class="statusClass[booking.status]">
+          {{ statusLabel[booking.status] || booking.status }}
+        </span>
+          </div>
           <div><span class="tg-hint">Заявитель:</span> <span class="tg-text">{{ booking.applicant_name }}</span></div>
           <div><span class="tg-hint">Телефон:</span> <span class="tg-text">{{ booking.applicant_phone }}</span></div>
           <div><span class="tg-hint">Мероприятие:</span> <span class="tg-text">{{ booking.event_name }}</span></div>
