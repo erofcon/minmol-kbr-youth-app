@@ -97,16 +97,6 @@ async function fetchBusyIntervals(roomId: string): Promise<ApiInterval[]> {
   return await api.getRoomBusy(roomId);
 }
 
-// async function fetchBusyIntervals(roomId: string): Promise<ApiInterval[]> {
-//   await new Promise(r => setTimeout(r, 400));
-//   return [
-//     {start_at: "2025-10-13T09:00:00.000Z", end_at: "2025-10-13T18:00:00.000Z"},
-//     {start_at: "2025-10-15T10:00:00.000Z", end_at: "2025-10-15T12:00:00.000Z"},
-//     {start_at: "2025-10-15T15:00:00.000Z", end_at: "2025-10-15T16:00:00.000Z"},
-//     {start_at: "2025-10-18T09:00:00.000Z", end_at: "2025-10-18T13:00:00.000Z"},
-//   ]
-// }
-
 function processBusy(api: ApiInterval[]) {
   const tmp = new Map<string, HourRange[]>()
 

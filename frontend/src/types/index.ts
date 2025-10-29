@@ -37,14 +37,49 @@ export interface HourRange {
     end: number
 }
 
+// Обновленный тип Event, соответствующий новому API
 export interface Event {
-    id: string;
-    image: string | null;
+    id: number;
     title: string;
+    short_description: string;
     description: string;
-    location: string;
-    period: string;
+    category: string;
+    type: string;
+    cover: string | null;
+    address: string;
+    settlement: string;
+    start: string; // YYYY-MM-DD
+    end: string;   // YYYY-MM-DD
+    supervisor_name?: string;
+    supervisor_l_name?: string;
+    supervisor_phone?: string;
+    supervisor_email?: string;
+    web?: string;
+    telegram?: string;
+    vk?: string;
+    roles?: string[];
+    docs?: string[];
+    images?: string[];
+    videos?: string[];
+    created_at: string;
+    user?: {
+        id: number;
+        name: string;
+    };
 }
+
+
+export interface PublicApiPaginated<T> {
+    status: 'success';
+    data: T[];
+    pagination: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+}
+
 
 export interface District {
     id: string;

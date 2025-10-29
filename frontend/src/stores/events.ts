@@ -1,64 +1,101 @@
-// src/stores/events.ts
 import {defineStore} from 'pinia';
 import type {Event} from '@/types';
+import {publicApi} from "@/api/publicApi";
 
-const mockApiResponse = {
-    results: [
-        {
-            id: 'wq2321eqwqweq',
-            image: 'https://молод07.рф/storage/uploads/events1/cover/1h3kfYmlwJeFqpthqv8X2lQlMq7BQb43E5QBq3pb.jpg',
-            title: 'В Нальчике пройдет КВН на кабардинском языке',
-            description: 'Весёлое состязание молодежных команд состоится в Доме молодежи 19 сентября. Команды из разных уголков республики сразятся за звание самых находчивых и остроумных. Зрителей ждет море юмора, яркие выступления и незабываемая атмосфера праздника. Приходите поддержать свои любимые команды!',
-            location: 'Нальчик, пр. Кулиева, 12',
-            period: '19.09.2025 — 19.09.2025'
-        },
-        {
-            id: 'wq2321eqwqsdfsdfsdweq',
-            image: 'https://minmol.kbr.ru/upload/iblock/4ba/hy8mulmpptjwankudiv8nuge8yddspl8/42f66b91_24b7_474a_91d7_c831810f7ae1.jpeg',
-            title: '«Проводники смыслов» в Кабардино-Балкарии.',
-            description: 'С 19 по 21 августа в трёх муниципальных образованиях республики прошла федеральная обучающая программа. Она собрала молодёжных лидеров и наставников, готовых транслировать ' +
-                'традиционные ценности и вовлекать молодёжь в социально значимые проекты. Участники прошли интенсивный курс лекций, тренингов и практических занятий.',
-            location: 'Нальчик, пр. Кулиева, 12',
-            period: '23.10.2025 — 25.10.2025'
-        },
-        {
-            id: 'event-3',
-            image: null,
-            title: 'Круглый стол по цифровой грамотности',
-            description: 'Обсуждение актуальных вопросов безопасности в сети и современных цифровых трендов. Эксперты поделятся советами, как защитить свои данные, распознавать фейковые новости и эффективно использовать цифровые инструменты для учебы и работы. Мероприятие будет транслироваться онлайн.',
-            location: 'Онлайн',
-            period: '30.11.2025'
-        }
-    ]
+// Вспомогательная функция для исправления данных от API
+const correctEventData = (event: Event): Event => {
+    // Проверяем, существует ли поле cover и содержит ли оно дубликат
+    if (event.cover && event.cover.includes('/storage/storage/')) {
+        // Заменяем двойное вхождение на одинарное
+        event.cover = event.cover.replace('/storage/storage/', '/storage/');
+    }
+    return event;
 };
+
 
 export const useEventsStore = defineStore('events', {
     state: () => ({
         events: [] as Event[],
+        eventsById: new Map<number, Event>(),
         loading: false,
+        loadingMore: false,
         error: null as string | null,
+        currentPage: 0,
+        lastPage: 1,
+        total: 0,
     }),
     getters: {
         getEventById(state) {
-            return (eventId: string): Event | undefined => {
-                return state.events.find(event => event.id === eventId);
+            return (eventId: number): Event | undefined => {
+                return state.eventsById.get(eventId);
             }
+        },
+        hasMore(state): boolean {
+            return state.currentPage < state.lastPage;
         }
     },
     actions: {
-        async fetchEvents() {
+        async fetchFirstPage(searchQuery: string = '') {
             this.loading = true;
             this.error = null;
             try {
-                // Имитируем задержку сети
-                await new Promise(resolve => setTimeout(resolve, 600));
-                this.events = mockApiResponse.results;
-            } catch (err) {
-                this.error = 'Не удалось загрузить мероприятия. Попробуйте позже.';
+                const response = await publicApi.getEvents({page: 1, search: searchQuery});
+
+                // Применяем исправление к каждому элементу
+                this.events = response.data.map(correctEventData);
+
+                this.eventsById.clear();
+                this.events.forEach(event => this.eventsById.set(event.id, event));
+
+                const {pagination} = response;
+                this.currentPage = pagination.current_page;
+                this.lastPage = pagination.last_page;
+                this.total = pagination.total;
+            } catch (err: any) {
+                this.error = err?.message || 'Не удалось загрузить мероприятия. Попробуйте позже.';
                 console.error(err);
             } finally {
                 this.loading = false;
             }
         },
+        async fetchMoreEvents(searchQuery: string = '') {
+            if (!this.hasMore || this.loadingMore) return;
+
+            this.loadingMore = true;
+            try {
+                const nextPage = this.currentPage + 1;
+                const response = await publicApi.getEvents({page: nextPage, search: searchQuery});
+
+                // Применяем исправление к новым элементам
+                const newEvents = response.data.map(correctEventData);
+
+                this.events.push(...newEvents);
+                newEvents.forEach(event => this.eventsById.set(event.id, event));
+
+                this.currentPage = response.pagination.current_page;
+
+            } catch (err: any) {
+                console.error('Failed to load more events:', err);
+            } finally {
+                this.loadingMore = false;
+            }
+        },
+        async fetchEventById(id: number) {
+            if (this.eventsById.has(id)) {
+                return;
+            }
+            this.loading = true;
+            try {
+                const response = await publicApi.getEventById(id);
+                // Применяем исправление к одному элементу
+                const correctedEvent = correctEventData(response.data);
+                this.eventsById.set(id, correctedEvent);
+            } catch (err: any) {
+                this.error = err?.message || `Не удалось загрузить мероприятие с ID ${id}.`;
+                console.error(err);
+            } finally {
+                this.loading = false;
+            }
+        }
     },
 });
