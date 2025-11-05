@@ -70,7 +70,7 @@ const navigateTo = (route: string) => {
 
         <div class="mt-4 pb-3 mb-4 border-b tg-border">
           <h1 class="font-bold tg-text ">Адрес</h1>
-          <p>г. Нальчик, ул. Кулиева 2</p>
+          <p> {{ room.address }} </p>
         </div>
       </div>
     </div>

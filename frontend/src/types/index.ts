@@ -17,6 +17,7 @@ export interface Room {
     image: string | null
     center: Center | null
     responsible: number
+    address: string
 }
 
 export interface BookingPayload {

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from organization.serializers import CenterSerializer
 
 from .models import RoomTag, Room, Booking, Status
+from core.utils import AbsoluteHTTPSImageField
 
 
 class RoomTagSerializer(serializers.ModelSerializer):
@@ -11,12 +12,17 @@ class RoomTagSerializer(serializers.ModelSerializer):
 
 
 class RoomSerializer(serializers.ModelSerializer):
+    image = AbsoluteHTTPSImageField(allow_null=True, required=False)
     tags = RoomTagSerializer(read_only=True, many=True)
     center = CenterSerializer(read_only=True)
+    address = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
         exclude = ['created_at', 'updated_at']
+
+    def get_address(self, obj):
+        return obj.address or (obj.center.address if obj.center else None)
 
 
 class BookingSerializer(serializers.ModelSerializer):

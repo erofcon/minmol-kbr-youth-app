@@ -77,6 +77,7 @@ export const api = {
                 ? {id: String(it.center.id), name: it.center.name}
                 : null,
             responsible: it.responsible ?? 0,
+            address: it.address
         }));
 
         return {...data, results};

@@ -14,7 +14,28 @@ TELEGRAM_OWNER_BOT_TOKEN = getenv('TELEGRAM_OWNER_BOT_TOKEN', '')
 TELEGRAM_INIT_DATA_TTL = int(getenv('TELEGRAM_INIT_DATA_TTL', 86400))
 
 DEBUG = getenv('DEBUG', '1') == '1'
-ALLOWED_HOSTS = ["*"]
+
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = [
+        'bot.молод07.рф',
+        'bot.xn--07-jlc1aemb.xn--p1ai',
+        '85.173.114.145',
+        '127.0.0.1',
+    ]
+
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+
+    CSRF_TRUSTED_ORIGINS = [
+        'https://bot.молод07.рф',
+        'https://bot.xn--07-jlc1aemb.xn--p1ai',
+    ]
+    CORS_ALLOWED_ORIGINS = [
+        'https://bot.молод07.рф',
+        'https://bot.xn--07-jlc1aemb.xn--p1ai',
+    ]
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_HEADERS = [
@@ -78,7 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
-3
+
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'UTC'
 USE_I18N = True
